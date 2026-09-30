@@ -18,15 +18,27 @@ public class ProdutosController : ControllerBase
         _context = context;
     }
 
-    [HttpGet] // Responde a GET /produtos
-    public async Task<ActionResult<List<Produto>>> Listar()
-    {
-        // Consulta os produtos no SQL Server e aguarda o resultado
-        var produtos = await _context.Produtos.ToListAsync();
+    [HttpGet] // GET /produtos ou /produtos?nome=teclado
+public async Task<ActionResult<List<Produto>>> Listar(
+    [FromQuery] string? nome)
+{
+    // Prepara a consulta, sem executá-la ainda
+    var consulta = _context.Produtos.AsQueryable();
 
-        // Retorna status 200 com a lista em JSON
-        return Ok(produtos);
+    // Aplica o filtro se um nome foi informado
+    if (!string.IsNullOrWhiteSpace(nome))
+    {
+        var termo = nome.Trim();
+
+        consulta = consulta.Where(produto =>
+            produto.Nome.Contains(termo));
     }
+
+    // Executa a consulta no banco
+    var produtos = await consulta.ToListAsync();
+
+    return Ok(produtos);
+}
 
     [HttpPost]
     public async Task<ActionResult<Produto>> Criar(Produto produto)
